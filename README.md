@@ -2,6 +2,12 @@
 
 A comprehensive, production-ready website security analysis tool that provides **real security assessments** using actual APIs, detailed vulnerability scanning, and actionable recommendations for improving website security.
 
+## 🌐 **Live Demo**
+
+**🔗 [Try it now: https://sathvik-nagesh.github.io/website-security-checker/](https://sathvik-nagesh.github.io/website-security-checker/)**
+
+Test the security of any website with real-time analysis and professional reporting!
+
 ## ✨ **Key Features**
 
 ### 🔒 **Real Security Analysis**
