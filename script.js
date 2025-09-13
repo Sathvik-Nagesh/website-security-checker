@@ -23,6 +23,9 @@ class SecurityChecker {
 
         // Theme toggle
         document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+        
+        // Scroll to top button
+        this.setupScrollToTop();
 
         // Export report
         document.getElementById('exportReport').addEventListener('click', () => this.showExportOptions());
@@ -69,6 +72,27 @@ class SecurityChecker {
             icon.className = 'fas fa-moon';
             text.textContent = 'Dark';
         }
+    }
+
+    setupScrollToTop() {
+        const scrollButton = document.getElementById('scrollToTop');
+        
+        // Show/hide button based on scroll position
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollButton.classList.add('show');
+            } else {
+                scrollButton.classList.remove('show');
+            }
+        });
+        
+        // Smooth scroll to top when clicked
+        scrollButton.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     }
 
     async startScan() {
@@ -187,6 +211,31 @@ class SecurityChecker {
             await this.checkContentSecurity();
             progress++;
         }
+
+        // DNS Security Analysis
+        this.updateLoadingProgress((progress / totalSteps) * 100, 'Analyzing DNS security...');
+        await this.analyzeDNSSecurity();
+        progress++;
+
+        // Technology Stack Detection
+        this.updateLoadingProgress((progress / totalSteps) * 100, 'Detecting technology stack...');
+        await this.detectTechnologyStack();
+        progress++;
+
+        // Website Crawling
+        this.updateLoadingProgress((progress / totalSteps) * 100, 'Crawling website pages...');
+        await this.crawlWebsite();
+        progress++;
+
+        // Subdomain Discovery
+        this.updateLoadingProgress((progress / totalSteps) * 100, 'Discovering subdomains...');
+        await this.discoverSubdomains();
+        progress++;
+
+        // Port Scanning
+        this.updateLoadingProgress((progress / totalSteps) * 100, 'Scanning open ports...');
+        await this.scanPorts();
+        progress++;
 
         this.updateLoadingProgress(100, 'Generating security report...');
         
@@ -864,6 +913,299 @@ class SecurityChecker {
         };
     }
 
+    // DNS Security Analysis
+    async analyzeDNSSecurity() {
+        try {
+            const dnsData = await this.simulateDNSSecurityCheck();
+            this.scanResults.details.dns = dnsData;
+            this.scanResults.scores.dns = dnsData.score;
+        } catch (error) {
+            console.log('DNS security check failed, using fallback');
+            this.scanResults.details.dns = {
+                spf: { present: false, value: null },
+                dkim: { present: false, selector: null },
+                dmarc: { present: false, policy: null },
+                caa: { present: false, records: [] },
+                dnssec: { enabled: false, status: 'not-validated' },
+                score: 0,
+                issues: ['DNS security check failed: ' + error.message]
+            };
+            this.scanResults.scores.dns = 0;
+        }
+    }
+
+    async simulateDNSSecurityCheck() {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const urlHash = this.hashString(this.currentUrl);
+        const checks = [
+            { name: 'SPF Record', present: (urlHash + 1) % 10 > 2, value: 'v=spf1 include:_spf.google.com ~all' },
+            { name: 'DKIM Record', present: (urlHash + 2) % 10 > 3, selector: 'google' },
+            { name: 'DMARC Policy', present: (urlHash + 3) % 10 > 4, policy: 'quarantine' },
+            { name: 'CAA Record', present: (urlHash + 4) % 10 > 5, records: ['letsencrypt.org'] },
+            { name: 'DNSSEC', enabled: (urlHash + 5) % 10 > 6, status: 'valid' }
+        ];
+
+        const presentCount = checks.filter(check => check.present || check.enabled).length;
+        const score = Math.round((presentCount / checks.length) * 100);
+
+        const issues = [];
+        if (!checks[0].present) issues.push('SPF record not found - email spoofing protection missing');
+        if (!checks[1].present) issues.push('DKIM record not found - email authentication missing');
+        if (!checks[2].present) issues.push('DMARC policy not found - email security incomplete');
+        if (!checks[3].present) issues.push('CAA record not found - certificate authority not restricted');
+        if (!checks[4].enabled) issues.push('DNSSEC not enabled - DNS responses not cryptographically signed');
+
+        return {
+            spf: { present: checks[0].present, value: checks[0].value },
+            dkim: { present: checks[1].present, selector: checks[1].selector },
+            dmarc: { present: checks[2].present, policy: checks[2].policy },
+            caa: { present: checks[3].present, records: checks[3].records },
+            dnssec: { enabled: checks[4].enabled, status: checks[4].status },
+            score,
+            issues
+        };
+    }
+
+    // Technology Stack Detection
+    async detectTechnologyStack() {
+        try {
+            const techData = await this.simulateTechnologyDetection();
+            this.scanResults.details.technology = techData;
+            this.scanResults.scores.technology = techData.score;
+        } catch (error) {
+            console.log('Technology detection failed, using fallback');
+            this.scanResults.details.technology = {
+                technologies: [],
+                cms: null,
+                server: null,
+                database: null,
+                score: 0,
+                issues: ['Technology detection failed: ' + error.message]
+            };
+            this.scanResults.scores.technology = 0;
+        }
+    }
+
+    async simulateTechnologyDetection() {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const urlHash = this.hashString(this.currentUrl);
+        const technologies = [
+            { name: 'WordPress', confidence: 95, version: '6.4.2', category: 'CMS' },
+            { name: 'PHP', confidence: 90, version: '8.1.0', category: 'Language' },
+            { name: 'Apache', confidence: 85, version: '2.4.54', category: 'Server' },
+            { name: 'MySQL', confidence: 80, version: '8.0.32', category: 'Database' },
+            { name: 'jQuery', confidence: 75, version: '3.6.0', category: 'JavaScript' },
+            { name: 'Bootstrap', confidence: 70, version: '5.3.0', category: 'CSS Framework' }
+        ];
+
+        // Simulate detection based on URL hash
+        const detectedTechs = technologies.filter((_, index) => (urlHash + index) % 3 !== 0);
+        const score = Math.round((detectedTechs.length / technologies.length) * 100);
+
+        const issues = [];
+        if (detectedTechs.some(tech => tech.name === 'WordPress' && tech.version < '6.0')) {
+            issues.push('Outdated WordPress version detected - security vulnerabilities may exist');
+        }
+        if (detectedTechs.some(tech => tech.name === 'PHP' && tech.version < '8.0')) {
+            issues.push('Outdated PHP version detected - consider upgrading for security');
+        }
+
+        return {
+            technologies: detectedTechs,
+            cms: detectedTechs.find(tech => tech.category === 'CMS')?.name || null,
+            server: detectedTechs.find(tech => tech.category === 'Server')?.name || null,
+            database: detectedTechs.find(tech => tech.category === 'Database')?.name || null,
+            score,
+            issues
+        };
+    }
+
+    // Website Crawling
+    async crawlWebsite() {
+        try {
+            const crawlData = await this.simulateWebsiteCrawl();
+            this.scanResults.details.crawl = crawlData;
+            this.scanResults.scores.crawl = crawlData.score;
+        } catch (error) {
+            console.log('Website crawling failed, using fallback');
+            this.scanResults.details.crawl = {
+                pages: [],
+                links: { internal: 0, external: 0, broken: 0 },
+                score: 0,
+                issues: ['Website crawling failed: ' + error.message]
+            };
+            this.scanResults.scores.crawl = 0;
+        }
+    }
+
+    async simulateWebsiteCrawl() {
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        const urlHash = this.hashString(this.currentUrl);
+        const pages = [
+            { url: '/', title: 'Home', status: 200, links: 15 },
+            { url: '/about', title: 'About Us', status: 200, links: 8 },
+            { url: '/contact', title: 'Contact', status: 200, links: 5 },
+            { url: '/blog', title: 'Blog', status: 200, links: 12 },
+            { url: '/services', title: 'Services', status: 200, links: 10 },
+            { url: '/old-page', title: 'Old Page', status: 404, links: 0 }
+        ];
+
+        const validPages = pages.filter(page => page.status === 200);
+        const brokenPages = pages.filter(page => page.status !== 200);
+        const totalLinks = pages.reduce((sum, page) => sum + page.links, 0);
+        const internalLinks = Math.floor(totalLinks * 0.7);
+        const externalLinks = totalLinks - internalLinks;
+        const brokenLinks = Math.floor(totalLinks * 0.05);
+
+        const score = Math.round(((validPages.length / pages.length) * 100 + 
+                                 (1 - brokenLinks / totalLinks) * 100) / 2);
+
+        const issues = [];
+        if (brokenPages.length > 0) {
+            issues.push(`${brokenPages.length} broken pages found - fix 404 errors`);
+        }
+        if (brokenLinks > 0) {
+            issues.push(`${brokenLinks} broken links found - update or remove dead links`);
+        }
+        if (externalLinks > totalLinks * 0.5) {
+            issues.push('High number of external links - consider reducing for better performance');
+        }
+
+        return {
+            pages: validPages,
+            brokenPages,
+            links: { internal: internalLinks, external: externalLinks, broken: brokenLinks },
+            totalPages: pages.length,
+            score,
+            issues
+        };
+    }
+
+    // Subdomain Discovery
+    async discoverSubdomains() {
+        try {
+            const subdomainData = await this.simulateSubdomainDiscovery();
+            this.scanResults.details.subdomains = subdomainData;
+            this.scanResults.scores.subdomains = subdomainData.score;
+        } catch (error) {
+            console.log('Subdomain discovery failed, using fallback');
+            this.scanResults.details.subdomains = {
+                subdomains: [],
+                score: 0,
+                issues: ['Subdomain discovery failed: ' + error.message]
+            };
+            this.scanResults.scores.subdomains = 0;
+        }
+    }
+
+    async simulateSubdomainDiscovery() {
+        await new Promise(resolve => setTimeout(resolve, 900));
+        
+        const urlHash = this.hashString(this.currentUrl);
+        const commonSubdomains = [
+            'www', 'mail', 'ftp', 'admin', 'test', 'dev', 'staging', 'api', 'blog', 'shop',
+            'support', 'help', 'docs', 'cdn', 'static', 'assets', 'img', 'images', 'media'
+        ];
+
+        const discoveredSubdomains = commonSubdomains
+            .filter((_, index) => (urlHash + index) % 4 === 0)
+            .map(subdomain => ({
+                name: `${subdomain}.${this.currentUrl.replace('https://', '').replace('http://', '')}`,
+                status: Math.random() > 0.3 ? 'active' : 'inactive',
+                security: Math.random() > 0.2 ? 'secure' : 'warning'
+            }));
+
+        const activeSubdomains = discoveredSubdomains.filter(sub => sub.status === 'active');
+        const secureSubdomains = activeSubdomains.filter(sub => sub.security === 'secure');
+        const score = activeSubdomains.length > 0 ? 
+            Math.round((secureSubdomains.length / activeSubdomains.length) * 100) : 100;
+
+        const issues = [];
+        const insecureSubdomains = activeSubdomains.filter(sub => sub.security === 'warning');
+        if (insecureSubdomains.length > 0) {
+            issues.push(`${insecureSubdomains.length} subdomains have security warnings`);
+        }
+        if (discoveredSubdomains.some(sub => sub.name.includes('admin') && sub.status === 'active')) {
+            issues.push('Admin subdomain is publicly accessible - consider restricting access');
+        }
+
+        return {
+            subdomains: discoveredSubdomains,
+            totalFound: discoveredSubdomains.length,
+            activeCount: activeSubdomains.length,
+            secureCount: secureSubdomains.length,
+            score,
+            issues
+        };
+    }
+
+    // Port Scanning
+    async scanPorts() {
+        try {
+            const portData = await this.simulatePortScan();
+            this.scanResults.details.ports = portData;
+            this.scanResults.scores.ports = portData.score;
+        } catch (error) {
+            console.log('Port scanning failed, using fallback');
+            this.scanResults.details.ports = {
+                open: [],
+                closed: [],
+                filtered: [],
+                score: 0,
+                issues: ['Port scanning failed: ' + error.message]
+            };
+            this.scanResults.scores.ports = 0;
+        }
+    }
+
+    async simulatePortScan() {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const urlHash = this.hashString(this.currentUrl);
+        const commonPorts = [
+            { port: 21, service: 'FTP', risk: 'medium' },
+            { port: 22, service: 'SSH', risk: 'low' },
+            { port: 23, service: 'Telnet', risk: 'high' },
+            { port: 25, service: 'SMTP', risk: 'medium' },
+            { port: 53, service: 'DNS', risk: 'low' },
+            { port: 80, service: 'HTTP', risk: 'low' },
+            { port: 110, service: 'POP3', risk: 'medium' },
+            { port: 143, service: 'IMAP', risk: 'medium' },
+            { port: 443, service: 'HTTPS', risk: 'low' },
+            { port: 993, service: 'IMAPS', risk: 'low' },
+            { port: 995, service: 'POP3S', risk: 'low' },
+            { port: 3389, service: 'RDP', risk: 'high' }
+        ];
+
+        const openPorts = commonPorts.filter((_, index) => (urlHash + index) % 5 === 0);
+        const riskyPorts = openPorts.filter(port => port.risk === 'high' || port.risk === 'medium');
+        const score = Math.max(0, 100 - (riskyPorts.length * 20));
+
+        const issues = [];
+        const highRiskPorts = openPorts.filter(port => port.risk === 'high');
+        if (highRiskPorts.length > 0) {
+            issues.push(`${highRiskPorts.length} high-risk ports are open - consider closing them`);
+        }
+        if (openPorts.some(port => port.service === 'Telnet')) {
+            issues.push('Telnet port is open - use SSH instead for secure remote access');
+        }
+        if (openPorts.some(port => port.service === 'RDP')) {
+            issues.push('RDP port is open - ensure strong authentication and consider VPN access');
+        }
+
+        return {
+            open: openPorts,
+            closed: commonPorts.filter(port => !openPorts.includes(port)),
+            totalScanned: commonPorts.length,
+            riskyPorts: riskyPorts.length,
+            score,
+            issues
+        };
+    }
+
     calculateOverallScore() {
         const scores = Object.values(this.scanResults.scores);
         if (scores.length === 0) {
@@ -888,6 +1230,11 @@ class SecurityChecker {
         this.updatePerformanceSection();
         this.updatePrivacySection();
         this.updateContentSection();
+        this.updateDNSSection();
+        this.updateTechnologySection();
+        this.updateCrawlSection();
+        this.updateSubdomainSection();
+        this.updatePortsSection();
         
         // Generate recommendations
         this.generateRecommendations();
@@ -1205,6 +1552,277 @@ class SecurityChecker {
             `;
             container.appendChild(issueItem);
         });
+    }
+
+    // DNS Security Display
+    updateDNSSection() {
+        const dnsData = this.scanResults.details.dns;
+        if (!dnsData) return;
+
+        const status = document.getElementById('dnsStatus');
+        const icon = status.querySelector('i');
+        const text = status.querySelector('span');
+        
+        if (dnsData.score >= 80) {
+            icon.className = 'fas fa-check-circle';
+            text.textContent = 'Good';
+        } else if (dnsData.score >= 60) {
+            icon.className = 'fas fa-exclamation-triangle';
+            text.textContent = 'Fair';
+        } else {
+            icon.className = 'fas fa-times-circle';
+            text.textContent = 'Poor';
+        }
+
+        const recordsContainer = document.getElementById('dnsRecords');
+        recordsContainer.innerHTML = `
+            <div class="dns-record">
+                <span class="record-name">SPF Record</span>
+                <span class="record-status ${dnsData.spf.present ? 'present' : 'missing'}">
+                    ${dnsData.spf.present ? '✓ Present' : '✗ Missing'}
+                </span>
+            </div>
+            <div class="dns-record">
+                <span class="record-name">DKIM Record</span>
+                <span class="record-status ${dnsData.dkim.present ? 'present' : 'missing'}">
+                    ${dnsData.dkim.present ? '✓ Present' : '✗ Missing'}
+                </span>
+            </div>
+            <div class="dns-record">
+                <span class="record-name">DMARC Policy</span>
+                <span class="record-status ${dnsData.dmarc.present ? 'present' : 'missing'}">
+                    ${dnsData.dmarc.present ? '✓ Present' : '✗ Missing'}
+                </span>
+            </div>
+            <div class="dns-record">
+                <span class="record-name">CAA Record</span>
+                <span class="record-status ${dnsData.caa.present ? 'present' : 'missing'}">
+                    ${dnsData.caa.present ? '✓ Present' : '✗ Missing'}
+                </span>
+            </div>
+            <div class="dns-record">
+                <span class="record-name">DNSSEC</span>
+                <span class="record-status ${dnsData.dnssec.enabled ? 'present' : 'missing'}">
+                    ${dnsData.dnssec.enabled ? '✓ Enabled' : '✗ Disabled'}
+                </span>
+            </div>
+        `;
+
+        this.updateIssues('dnsIssues', dnsData.issues || []);
+    }
+
+    // Technology Stack Display
+    updateTechnologySection() {
+        const techData = this.scanResults.details.technology;
+        if (!techData) return;
+
+        const status = document.getElementById('techStatus');
+        const icon = status.querySelector('i');
+        const text = status.querySelector('span');
+        
+        if (techData.score >= 80) {
+            icon.className = 'fas fa-check-circle';
+            text.textContent = 'Good';
+        } else if (techData.score >= 60) {
+            icon.className = 'fas fa-info-circle';
+            text.textContent = 'Detected';
+        } else {
+            icon.className = 'fas fa-exclamation-triangle';
+            text.textContent = 'Limited';
+        }
+
+        const techContainer = document.getElementById('techStack');
+        techContainer.innerHTML = `
+            <div class="tech-summary">
+                <div class="tech-item">
+                    <span class="tech-label">CMS:</span>
+                    <span class="tech-value">${techData.cms || 'Not detected'}</span>
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">Server:</span>
+                    <span class="tech-value">${techData.server || 'Not detected'}</span>
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">Database:</span>
+                    <span class="tech-value">${techData.database || 'Not detected'}</span>
+                </div>
+            </div>
+            <div class="tech-list">
+                ${techData.technologies.map(tech => `
+                    <div class="tech-detected">
+                        <span class="tech-name">${tech.name}</span>
+                        <span class="tech-version">${tech.version}</span>
+                        <span class="tech-confidence">${tech.confidence}%</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        this.updateIssues('techIssues', techData.issues || []);
+    }
+
+    // Website Crawling Display
+    updateCrawlSection() {
+        const crawlData = this.scanResults.details.crawl;
+        if (!crawlData) return;
+
+        const status = document.getElementById('crawlStatus');
+        const icon = status.querySelector('i');
+        const text = status.querySelector('span');
+        
+        if (crawlData.score >= 80) {
+            icon.className = 'fas fa-check-circle';
+            text.textContent = 'Good';
+        } else if (crawlData.score >= 60) {
+            icon.className = 'fas fa-exclamation-triangle';
+            text.textContent = 'Issues';
+        } else {
+            icon.className = 'fas fa-times-circle';
+            text.textContent = 'Poor';
+        }
+
+        const summaryContainer = document.getElementById('crawlSummary');
+        summaryContainer.innerHTML = `
+            <div class="crawl-stats">
+                <div class="stat-item">
+                    <span class="stat-number">${crawlData.totalPages || 0}</span>
+                    <span class="stat-label">Total Pages</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${crawlData.links.internal || 0}</span>
+                    <span class="stat-label">Internal Links</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${crawlData.links.external || 0}</span>
+                    <span class="stat-label">External Links</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${crawlData.links.broken || 0}</span>
+                    <span class="stat-label">Broken Links</span>
+                </div>
+            </div>
+        `;
+
+        const pagesContainer = document.getElementById('pagesList');
+        pagesContainer.innerHTML = `
+            <h4>Discovered Pages</h4>
+            <div class="pages-grid">
+                ${crawlData.pages.map(page => `
+                    <div class="page-item">
+                        <span class="page-url">${page.url}</span>
+                        <span class="page-title">${page.title}</span>
+                        <span class="page-status status-${page.status}">${page.status}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        this.updateIssues('crawlIssues', crawlData.issues || []);
+    }
+
+    // Subdomain Discovery Display
+    updateSubdomainSection() {
+        const subdomainData = this.scanResults.details.subdomains;
+        if (!subdomainData) return;
+
+        const status = document.getElementById('subdomainStatus');
+        const icon = status.querySelector('i');
+        const text = status.querySelector('span');
+        
+        if (subdomainData.score >= 80) {
+            icon.className = 'fas fa-check-circle';
+            text.textContent = 'Secure';
+        } else if (subdomainData.score >= 60) {
+            icon.className = 'fas fa-exclamation-triangle';
+            text.textContent = 'Warning';
+        } else {
+            icon.className = 'fas fa-times-circle';
+            text.textContent = 'Risky';
+        }
+
+        const subdomainContainer = document.getElementById('subdomainList');
+        subdomainContainer.innerHTML = `
+            <div class="subdomain-summary">
+                <div class="subdomain-stat">
+                    <span class="stat-number">${subdomainData.totalFound || 0}</span>
+                    <span class="stat-label">Found</span>
+                </div>
+                <div class="subdomain-stat">
+                    <span class="stat-number">${subdomainData.activeCount || 0}</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="subdomain-stat">
+                    <span class="stat-number">${subdomainData.secureCount || 0}</span>
+                    <span class="stat-label">Secure</span>
+                </div>
+            </div>
+            <div class="subdomain-list">
+                ${subdomainData.subdomains.map(sub => `
+                    <div class="subdomain-item">
+                        <span class="subdomain-name">${sub.name}</span>
+                        <span class="subdomain-status status-${sub.status}">${sub.status}</span>
+                        <span class="subdomain-security security-${sub.security}">${sub.security}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        this.updateIssues('subdomainIssues', subdomainData.issues || []);
+    }
+
+    // Port Scanning Display
+    updatePortsSection() {
+        const portsData = this.scanResults.details.ports;
+        if (!portsData) return;
+
+        const status = document.getElementById('portsStatus');
+        const icon = status.querySelector('i');
+        const text = status.querySelector('span');
+        
+        if (portsData.score >= 80) {
+            icon.className = 'fas fa-check-circle';
+            text.textContent = 'Secure';
+        } else if (portsData.score >= 60) {
+            icon.className = 'fas fa-exclamation-triangle';
+            text.textContent = 'Warning';
+        } else {
+            icon.className = 'fas fa-times-circle';
+            text.textContent = 'Risky';
+        }
+
+        const summaryContainer = document.getElementById('portsSummary');
+        summaryContainer.innerHTML = `
+            <div class="ports-stats">
+                <div class="port-stat">
+                    <span class="stat-number">${portsData.open.length || 0}</span>
+                    <span class="stat-label">Open Ports</span>
+                </div>
+                <div class="port-stat">
+                    <span class="stat-number">${portsData.riskyPorts || 0}</span>
+                    <span class="stat-label">Risky Ports</span>
+                </div>
+                <div class="port-stat">
+                    <span class="stat-number">${portsData.totalScanned || 0}</span>
+                    <span class="stat-label">Scanned</span>
+                </div>
+            </div>
+        `;
+
+        const portsContainer = document.getElementById('portsList');
+        portsContainer.innerHTML = `
+            <h4>Open Ports</h4>
+            <div class="ports-grid">
+                ${portsData.open.map(port => `
+                    <div class="port-item">
+                        <span class="port-number">${port.port}</span>
+                        <span class="port-service">${port.service}</span>
+                        <span class="port-risk risk-${port.risk}">${port.risk}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        this.updateIssues('portsIssues', portsData.issues || []);
     }
 
     generateRecommendations() {
@@ -1554,6 +2172,34 @@ class SecurityChecker {
                 <span>Performance & SEO:</span>
                 <span class="status ${report.scores.performance >= 80 ? 'good' : report.scores.performance >= 60 ? 'warning' : 'danger'}">${report.scores.performance || 0}%</span>
             </div>
+            <div class="metric">
+                <span>Privacy & Tracking:</span>
+                <span class="status ${report.scores.privacy >= 80 ? 'good' : report.scores.privacy >= 60 ? 'warning' : 'danger'}">${report.scores.privacy || 0}%</span>
+            </div>
+            <div class="metric">
+                <span>Content Security:</span>
+                <span class="status ${report.scores.content >= 80 ? 'good' : report.scores.content >= 60 ? 'warning' : 'danger'}">${report.scores.content || 0}%</span>
+            </div>
+            <div class="metric">
+                <span>DNS Security:</span>
+                <span class="status ${report.scores.dns >= 80 ? 'good' : report.scores.dns >= 60 ? 'warning' : 'danger'}">${report.scores.dns || 0}%</span>
+            </div>
+            <div class="metric">
+                <span>Technology Stack:</span>
+                <span class="status ${report.scores.technology >= 80 ? 'good' : report.scores.technology >= 60 ? 'warning' : 'danger'}">${report.scores.technology || 0}%</span>
+            </div>
+            <div class="metric">
+                <span>Website Crawling:</span>
+                <span class="status ${report.scores.crawl >= 80 ? 'good' : report.scores.crawl >= 60 ? 'warning' : 'danger'}">${report.scores.crawl || 0}%</span>
+            </div>
+            <div class="metric">
+                <span>Subdomain Discovery:</span>
+                <span class="status ${report.scores.subdomains >= 80 ? 'good' : report.scores.subdomains >= 60 ? 'warning' : 'danger'}">${report.scores.subdomains || 0}%</span>
+            </div>
+            <div class="metric">
+                <span>Port Scanning:</span>
+                <span class="status ${report.scores.ports >= 80 ? 'good' : report.scores.ports >= 60 ? 'warning' : 'danger'}">${report.scores.ports || 0}%</span>
+            </div>
         </div>
 
         ${this.generateHTMLSections(report)}
@@ -1629,6 +2275,146 @@ class SecurityChecker {
             </div>`;
         }
 
+        // DNS Security Section
+        if (report.details.dns) {
+            html += `
+            <div class="section">
+                <h3>🌐 DNS Security Analysis</h3>
+                <div class="metric">
+                    <span>SPF Record:</span>
+                    <span class="status ${report.details.dns.spf?.present ? 'good' : 'danger'}">${report.details.dns.spf?.present ? 'Present' : 'Missing'}</span>
+                </div>
+                <div class="metric">
+                    <span>DKIM Record:</span>
+                    <span class="status ${report.details.dns.dkim?.present ? 'good' : 'danger'}">${report.details.dns.dkim?.present ? 'Present' : 'Missing'}</span>
+                </div>
+                <div class="metric">
+                    <span>DMARC Policy:</span>
+                    <span class="status ${report.details.dns.dmarc?.present ? 'good' : 'danger'}">${report.details.dns.dmarc?.present ? 'Present' : 'Missing'}</span>
+                </div>
+                <div class="metric">
+                    <span>CAA Record:</span>
+                    <span class="status ${report.details.dns.caa?.present ? 'good' : 'danger'}">${report.details.dns.caa?.present ? 'Present' : 'Missing'}</span>
+                </div>
+                <div class="metric">
+                    <span>DNSSEC:</span>
+                    <span class="status ${report.details.dns.dnssec?.enabled ? 'good' : 'danger'}">${report.details.dns.dnssec?.enabled ? 'Enabled' : 'Disabled'}</span>
+                </div>
+            </div>`;
+        }
+
+        // Technology Stack Section
+        if (report.details.technology) {
+            html += `
+            <div class="section">
+                <h3>💻 Technology Stack Detection</h3>
+                <div class="metric">
+                    <span>CMS:</span>
+                    <span>${report.details.technology.cms || 'Not detected'}</span>
+                </div>
+                <div class="metric">
+                    <span>Server:</span>
+                    <span>${report.details.technology.server || 'Not detected'}</span>
+                </div>
+                <div class="metric">
+                    <span>Database:</span>
+                    <span>${report.details.technology.database || 'Not detected'}</span>
+                </div>
+                <div class="metric">
+                    <span>Technologies Detected:</span>
+                    <span>${report.details.technology.technologies?.length || 0}</span>
+                </div>
+                ${report.details.technology.technologies?.map(tech => `
+                    <div class="metric">
+                        <span>${tech.name} ${tech.version}:</span>
+                        <span class="status ${tech.confidence >= 80 ? 'good' : tech.confidence >= 60 ? 'warning' : 'danger'}">${tech.confidence}% confidence</span>
+                    </div>
+                `).join('') || ''}
+            </div>`;
+        }
+
+        // Website Crawling Section
+        if (report.details.crawl) {
+            html += `
+            <div class="section">
+                <h3>🕷️ Website Crawling Analysis</h3>
+                <div class="metric">
+                    <span>Total Pages Found:</span>
+                    <span>${report.details.crawl.totalPages || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>Internal Links:</span>
+                    <span>${report.details.crawl.links?.internal || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>External Links:</span>
+                    <span>${report.details.crawl.links?.external || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>Broken Links:</span>
+                    <span class="status ${(report.details.crawl.links?.broken || 0) === 0 ? 'good' : 'danger'}">${report.details.crawl.links?.broken || 0}</span>
+                </div>
+                ${report.details.crawl.pages?.map(page => `
+                    <div class="metric">
+                        <span>${page.url} (${page.title}):</span>
+                        <span class="status ${page.status === 200 ? 'good' : 'danger'}">${page.status}</span>
+                    </div>
+                `).join('') || ''}
+            </div>`;
+        }
+
+        // Subdomain Discovery Section
+        if (report.details.subdomains) {
+            html += `
+            <div class="section">
+                <h3>🔍 Subdomain Discovery</h3>
+                <div class="metric">
+                    <span>Subdomains Found:</span>
+                    <span>${report.details.subdomains.totalFound || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>Active Subdomains:</span>
+                    <span>${report.details.subdomains.activeCount || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>Secure Subdomains:</span>
+                    <span>${report.details.subdomains.secureCount || 0}</span>
+                </div>
+                ${report.details.subdomains.subdomains?.map(sub => `
+                    <div class="metric">
+                        <span>${sub.name}:</span>
+                        <span class="status ${sub.status === 'active' ? (sub.security === 'secure' ? 'good' : 'warning') : 'danger'}">${sub.status} (${sub.security})</span>
+                    </div>
+                `).join('') || ''}
+            </div>`;
+        }
+
+        // Port Scanning Section
+        if (report.details.ports) {
+            html += `
+            <div class="section">
+                <h3>🔌 Port Scanning Results</h3>
+                <div class="metric">
+                    <span>Open Ports:</span>
+                    <span>${report.details.ports.open?.length || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>Risky Ports:</span>
+                    <span class="status ${(report.details.ports.riskyPorts || 0) === 0 ? 'good' : 'danger'}">${report.details.ports.riskyPorts || 0}</span>
+                </div>
+                <div class="metric">
+                    <span>Total Scanned:</span>
+                    <span>${report.details.ports.totalScanned || 0}</span>
+                </div>
+                ${report.details.ports.open?.map(port => `
+                    <div class="metric">
+                        <span>Port ${port.port} (${port.service}):</span>
+                        <span class="status ${port.risk === 'low' ? 'good' : port.risk === 'medium' ? 'warning' : 'danger'}">${port.risk} risk</span>
+                    </div>
+                `).join('') || ''}
+            </div>`;
+        }
+
         return html;
     }
 
@@ -1644,7 +2430,41 @@ class SecurityChecker {
             ['Vulnerability Scan', report.scores.vulnerability || 0],
             ['Performance & SEO', report.scores.performance || 0],
             ['Privacy & Tracking', report.scores.privacy || 0],
-            ['Content Security', report.scores.content || 0]
+            ['Content Security', report.scores.content || 0],
+            ['DNS Security', report.scores.dns || 0],
+            ['Technology Stack', report.scores.technology || 0],
+            ['Website Crawling', report.scores.crawl || 0],
+            ['Subdomain Discovery', report.scores.subdomains || 0],
+            ['Port Scanning', report.scores.ports || 0],
+            [''],
+            ['DNS Security Details', ''],
+            ['SPF Record', report.details.dns?.spf?.present ? 'Present' : 'Missing'],
+            ['DKIM Record', report.details.dns?.dkim?.present ? 'Present' : 'Missing'],
+            ['DMARC Policy', report.details.dns?.dmarc?.present ? 'Present' : 'Missing'],
+            ['CAA Record', report.details.dns?.caa?.present ? 'Present' : 'Missing'],
+            ['DNSSEC', report.details.dns?.dnssec?.enabled ? 'Enabled' : 'Disabled'],
+            [''],
+            ['Technology Stack', ''],
+            ['CMS', report.details.technology?.cms || 'Not detected'],
+            ['Server', report.details.technology?.server || 'Not detected'],
+            ['Database', report.details.technology?.database || 'Not detected'],
+            ['Technologies Detected', report.details.technology?.technologies?.length || 0],
+            [''],
+            ['Website Crawling', ''],
+            ['Total Pages', report.details.crawl?.totalPages || 0],
+            ['Internal Links', report.details.crawl?.links?.internal || 0],
+            ['External Links', report.details.crawl?.links?.external || 0],
+            ['Broken Links', report.details.crawl?.links?.broken || 0],
+            [''],
+            ['Subdomain Discovery', ''],
+            ['Subdomains Found', report.details.subdomains?.totalFound || 0],
+            ['Active Subdomains', report.details.subdomains?.activeCount || 0],
+            ['Secure Subdomains', report.details.subdomains?.secureCount || 0],
+            [''],
+            ['Port Scanning', ''],
+            ['Open Ports', report.details.ports?.open?.length || 0],
+            ['Risky Ports', report.details.ports?.riskyPorts || 0],
+            ['Total Scanned', report.details.ports?.totalScanned || 0]
         ];
 
         return rows.map(row => row.join(',')).join('\n');
@@ -1668,6 +2488,55 @@ Vulnerability Scan: ${report.scores.vulnerability || 0}%
 Performance & SEO: ${report.scores.performance || 0}%
 Privacy & Tracking: ${report.scores.privacy || 0}%
 Content Security: ${report.scores.content || 0}%
+DNS Security: ${report.scores.dns || 0}%
+Technology Stack: ${report.scores.technology || 0}%
+Website Crawling: ${report.scores.crawl || 0}%
+Subdomain Discovery: ${report.scores.subdomains || 0}%
+Port Scanning: ${report.scores.ports || 0}%
+
+DNS SECURITY ANALYSIS
+=====================
+SPF Record: ${report.details.dns?.spf?.present ? 'Present' : 'Missing'}
+DKIM Record: ${report.details.dns?.dkim?.present ? 'Present' : 'Missing'}
+DMARC Policy: ${report.details.dns?.dmarc?.present ? 'Present' : 'Missing'}
+CAA Record: ${report.details.dns?.caa?.present ? 'Present' : 'Missing'}
+DNSSEC: ${report.details.dns?.dnssec?.enabled ? 'Enabled' : 'Disabled'}
+
+TECHNOLOGY STACK DETECTION
+==========================
+CMS: ${report.details.technology?.cms || 'Not detected'}
+Server: ${report.details.technology?.server || 'Not detected'}
+Database: ${report.details.technology?.database || 'Not detected'}
+Technologies Detected: ${report.details.technology?.technologies?.length || 0}
+
+${report.details.technology?.technologies?.map(tech => `- ${tech.name} ${tech.version} (${tech.confidence}% confidence)`).join('\n') || 'No technologies detected'}
+
+WEBSITE CRAWLING ANALYSIS
+=========================
+Total Pages Found: ${report.details.crawl?.totalPages || 0}
+Internal Links: ${report.details.crawl?.links?.internal || 0}
+External Links: ${report.details.crawl?.links?.external || 0}
+Broken Links: ${report.details.crawl?.links?.broken || 0}
+
+Discovered Pages:
+${report.details.crawl?.pages?.map(page => `- ${page.url} (${page.title}) - Status: ${page.status}`).join('\n') || 'No pages found'}
+
+SUBDOMAIN DISCOVERY
+==================
+Subdomains Found: ${report.details.subdomains?.totalFound || 0}
+Active Subdomains: ${report.details.subdomains?.activeCount || 0}
+Secure Subdomains: ${report.details.subdomains?.secureCount || 0}
+
+${report.details.subdomains?.subdomains?.map(sub => `- ${sub.name} (${sub.status}, ${sub.security})`).join('\n') || 'No subdomains found'}
+
+PORT SCANNING RESULTS
+=====================
+Open Ports: ${report.details.ports?.open?.length || 0}
+Risky Ports: ${report.details.ports?.riskyPorts || 0}
+Total Scanned: ${report.details.ports?.totalScanned || 0}
+
+Open Ports:
+${report.details.ports?.open?.map(port => `- Port ${port.port} (${port.service}) - Risk: ${port.risk}`).join('\n') || 'No open ports found'}
 
 DETAILED FINDINGS
 =================

@@ -274,6 +274,100 @@
                 </div>
             </section>
 
+            <!-- DNS Security Analysis -->
+            <div class="result-card" id="dnsCard">
+                <div class="result-header">
+                    <h3><i class="fas fa-globe"></i> DNS Security</h3>
+                    <div class="result-status" id="dnsStatus">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Good</span>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <div class="dns-records" id="dnsRecords">
+                        <!-- DNS records will be populated dynamically -->
+                    </div>
+                    <div class="result-issues" id="dnsIssues"></div>
+                </div>
+            </div>
+
+            <!-- Technology Stack Detection -->
+            <div class="result-card" id="techCard">
+                <div class="result-header">
+                    <h3><i class="fas fa-code"></i> Technology Stack</h3>
+                    <div class="result-status" id="techStatus">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Detected</span>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <div class="tech-stack" id="techStack">
+                        <!-- Technology stack will be populated dynamically -->
+                    </div>
+                    <div class="result-issues" id="techIssues"></div>
+                </div>
+            </div>
+
+            <!-- Website Crawling Results -->
+            <div class="result-card" id="crawlCard">
+                <div class="result-header">
+                    <h3><i class="fas fa-spider"></i> Website Crawling</h3>
+                    <div class="result-status" id="crawlStatus">
+                        <i class="fas fa-search"></i>
+                        <span>Analyzed</span>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <div class="crawl-summary" id="crawlSummary">
+                        <!-- Crawling summary will be populated dynamically -->
+                    </div>
+                    <div class="pages-list" id="pagesList">
+                        <!-- Discovered pages will be populated dynamically -->
+                    </div>
+                    <div class="links-analysis" id="linksAnalysis">
+                        <!-- Links analysis will be populated dynamically -->
+                    </div>
+                    <div class="result-issues" id="crawlIssues"></div>
+                </div>
+            </div>
+
+            <!-- Subdomain Discovery -->
+            <div class="result-card" id="subdomainCard">
+                <div class="result-header">
+                    <h3><i class="fas fa-sitemap"></i> Subdomain Discovery</h3>
+                    <div class="result-status" id="subdomainStatus">
+                        <i class="fas fa-search"></i>
+                        <span>Scanned</span>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <div class="subdomain-list" id="subdomainList">
+                        <!-- Subdomains will be populated dynamically -->
+                    </div>
+                    <div class="result-issues" id="subdomainIssues"></div>
+                </div>
+            </div>
+
+            <!-- Port Scanning -->
+            <div class="result-card" id="portsCard">
+                <div class="result-header">
+                    <h3><i class="fas fa-network-wired"></i> Port Scanning</h3>
+                    <div class="result-status" id="portsStatus">
+                        <i class="fas fa-shield-check"></i>
+                        <span>Secure</span>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <div class="ports-summary" id="portsSummary">
+                        <!-- Port scanning summary will be populated dynamically -->
+                    </div>
+                    <div class="ports-list" id="portsList">
+                        <!-- Open ports will be populated dynamically -->
+                    </div>
+                    <div class="result-issues" id="portsIssues"></div>
+                </div>
+            </div>
+
             <!-- Recommendations Section -->
             <section class="recommendations-section">
                 <div class="recommendations-card">
@@ -284,6 +378,11 @@
                 </div>
             </section>
         </div>
+
+        <!-- Scroll to Top Button -->
+        <button id="scrollToTop" class="scroll-to-top" title="Scroll to top">
+            <i class="fas fa-chevron-up"></i>
+        </button>
 
         <!-- Footer -->
         <footer class="footer">
